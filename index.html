@@ -1,0 +1,194 @@
+<html>
+<head>
+	<title>Game</title>
+	<style>
+		#gameCanvas {
+		  background-color: #ddd;
+		  border: 1px solid #000;
+		}
+	</style>
+</head>
+<body>
+	<canvas id="gameCanvas" width="1400" height="700"></canvas>
+	
+	<script>
+		// Initialize canvas and context
+		const canvas = document.getElementById('gameCanvas');
+		const ctx = canvas.getContext('2d');
+
+		// Set up main character image
+		const mainCharacterImg = new Image();
+		mainCharacterImg.src = 'img/main-character.jpg';
+
+		// Set up tile image
+		const tileImg = new Image();
+		tileImg.src = 'img/brick.jpg';
+
+		// Set up main character object
+		const mainCharacter = {
+		  x: 0,
+		  y: 0,
+		  width: 89,
+		  height: 127,
+		  speed: 5,
+		  jumping: false,
+		  falling: false,
+		  gravity: 4,
+		  jumpStrength: 180,
+		  jumpAdvance: 0,
+		  moveLeft: false,
+		  moveRight: false,
+		  moveUp: false
+		};
+
+		// Set up tile objects
+		const tiles = [
+		  {x: 0, y: 432, width: 144, height: 144},
+		  {x: 144, y: 432, width: 144, height: 144},
+		  {x: 288, y: 432, width: 144, height: 144},
+		  {x: 432, y: 432, width: 144, height: 144},
+		  {x: 576, y: 432, width: 144, height: 144},
+		  {x: 864, y: 432, width: 144, height: 144},
+		  {x: 1008, y: 432, width: 144, height: 144},
+		  {x: 1008, y: 288, width: 144, height: 144},
+		  {x: 1152, y: 432, width: 144, height: 144},
+		  {x: 1296, y: 432, width: 144, height: 144},
+		  {x: 1440, y: 432, width: 144, height: 144},
+		  {x: 1584, y: 432, width: 144, height: 144},
+		  {x: 1728, y: 432, width: 144, height: 144},
+		  // Add more tiles here...
+		];
+		
+		let scrollPosition = 0;
+
+		// Check for collision between main character and tiles
+		function checkCollision() {
+		  mainCharacter.falling = true;
+		  tiles.forEach(tile => {
+			/*
+			// Check if main character is touching a tile from the left or right
+			if (mainCharacter.x + mainCharacter.width > tile.x &&
+				mainCharacter.x < tile.x + tile.width &&
+				mainCharacter.y + mainCharacter.height > tile.y &&
+				mainCharacter.y < tile.y + tile.height) {
+			  // Stop movement and place main character next to tile
+			  if (mainCharacter.x < tile.x) {
+				mainCharacter.x = tile.x - mainCharacter.width;
+			  } else {
+				mainCharacter.x = tile.x + tile.width;
+			  }
+			}
+			*/
+
+			// Check if main character is touching a tile from the top
+			if (mainCharacter.x + mainCharacter.width > tile.x &&
+				mainCharacter.x < tile.x + tile.width &&
+				mainCharacter.y + mainCharacter.height > tile.y &&
+				mainCharacter.y < tile.y + tile.height) {
+			  // Stop falling and place main character on top of tile
+			  mainCharacter.y = tile.y - mainCharacter.height;
+			  mainCharacter.jumping = false;
+			}
+			  
+			// check if the tile is under the main character
+			if (mainCharacter.x + mainCharacter.width > tile.x &&
+				mainCharacter.x < tile.x + tile.width &&
+				mainCharacter.y + mainCharacter.height == tile.y) {
+			  // Stop falling 
+			  mainCharacter.falling = false;
+			}
+		  });
+		}
+
+		// Update main character position and status
+		function update() {
+		  // Check for collision with tiles
+		  if(!mainCharacter.jumping)
+			checkCollision();
+		  
+		  // Move left or right
+		  if (mainCharacter.moveLeft) {
+			mainCharacter.x -= mainCharacter.speed;
+		  } else if (mainCharacter.moveRight) {
+			mainCharacter.x += mainCharacter.speed;
+		  }
+
+		  // Apply gravity if falling
+		  if (mainCharacter.falling) {
+			mainCharacter.y += mainCharacter.gravity;
+		  }
+
+		  // Jump
+		  if (!mainCharacter.falling && !mainCharacter.jumping && mainCharacter.moveUp) {
+		  //if (!mainCharacter.jumping && mainCharacter.moveUp) {
+			mainCharacter.jumping = true;
+			mainCharacter.jumpAdvance = 0;
+		  }
+		  
+		  // check if jumping reach the jump strength
+		  if (mainCharacter.jumping) {
+			mainCharacter.y -= mainCharacter.speed;
+			mainCharacter.jumpAdvance += mainCharacter.speed
+			if(mainCharacter.jumpAdvance >= mainCharacter.jumpStrength) {
+				mainCharacter.jumping = false;
+			}
+		  }
+		  
+		  // Update scroll position
+		  if (mainCharacter.x > canvas.width / 2 && mainCharacter.x < 2500 - canvas.width / 2) {
+			scrollPosition = mainCharacter.x - canvas.width / 2;
+		  }
+		}
+
+		// Draw main character and tiles on canvas
+		function draw() {
+		  // Clear canvas
+		  ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+		  // Draw main character
+		  ctx.drawImage(mainCharacterImg, mainCharacter.x - scrollPosition, mainCharacter.y, mainCharacter.width, mainCharacter.height);
+
+		  // Draw tiles
+		  tiles.forEach(tile => {
+			ctx.drawImage(tileImg, tile.x - scrollPosition, tile.y, tile.width, tile.height);
+		  });
+		}
+
+		  
+		// Handle keyboard input
+		function inputs()
+		{
+			document.addEventListener('keydown', e => {
+			  if (e.keyCode === 37) { // left arrow key
+				mainCharacter.moveLeft = true;
+			  } else if (e.keyCode === 38) { // up arrow key
+				mainCharacter.moveUp = true;
+				mainCharacter.jumping = true;
+			  } else if (e.keyCode === 39) { // right arrow key
+				mainCharacter.moveRight = true;
+			  }
+			});
+			document.addEventListener('keyup', e => {
+			  if (e.keyCode === 37) { // left arrow key
+				mainCharacter.moveLeft = false;
+			  } else if (e.keyCode === 38) { // up arrow key
+				mainCharacter.moveUp = false;
+			  } else if (e.keyCode === 39) { // right arrow key
+				mainCharacter.moveRight = false;
+			  }
+			});
+		}
+
+		// Game loop
+		function gameLoop() {
+		  inputs();
+		  update();
+		  draw();
+		  requestAnimationFrame(gameLoop);
+		}
+	
+		gameLoop();
+	</script>
+
+</body>
+</html>
